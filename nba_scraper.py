@@ -56,26 +56,3 @@ def calculate_medians(df):
     # Compute medians
     medians = df_clean[numeric_cols].median()
     return medians
-
-# Step 5: Main function
-def main(player_name):
-    suffix = get_player_suffix(player_name)
-    if not suffix:
-        print(f"Could not find suffix for {player_name}")
-        return
-    print(f"Suffix: {suffix}")
-    
-    season = get_latest_season()
-    df = get_game_log_table(suffix, season)
-    
-    if df is None:
-        print("Could not find stats table")
-        return
-
-    medians = calculate_medians(df)
-    print(f"Medians for {player_name}:")
-    print(medians)
-
-# Run the scraper
-if __name__ == "__main__":
-    main("LeBron James")
