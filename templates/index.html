@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NBA Stats Viewer</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+<body>
+<input id="name" placeholder="Player name">
+<input id="season" placeholder="Season">
+<select id="stat">
+    <option value="">-- Select Stat --</option>
+    <option value="PTS">Points</option>
+    <option value="AST">Assists</option>
+    <option value="TRB">Rebounds</option>
+    <option value="STL">Steals</option>
+    <option value="BLK">Blocks</option>
+    <option value="FG">Field Goals</option>
+    <option value="MP">Minutes Played</option>
+</select>
+
+<button onclick="lookup()">Search</button>
+
+<div id="chart"></div>
+
+<script>
+async function lookup() {
+    let name = document.querySelector("#name").value;
+    let season = document.querySelector("#season").value;
+    let stat = document.querySelector("#stat").value;
+
+    if (!name || !season || !stat) {
+        alert("Please enter player name, season, and stat type.");
+        return;
+    }
+
+    let url = `/player?name=${encodeURIComponent(name)}&season=${season}`;
+
+    d3.select("#chart").html("Loading...");
+
+    let res = await fetch(url);
+    let data = await res.json();
+
+    renderChart(data, stat);
+}
+function renderChart(data, stat) {
+    d3.select("#chart").html("");
+
+    let cleaned = data
+    .filter(d =>
+        d["Rk"] &&
+        !isNaN(+d["Rk"]) &&
+        d[stat] !== null && 
+        d[stat] !== undefined &&
+        d[stat] !== "" &&
+        !isNaN(+d[stat])
+    )
+    .map((d, i) => ({
+        game: i + 1,
+        value: +d[stat]
+    }));
+
+    // Chart dimensions
+    const width = 800;
+    const height = 300;
+    const margin = {top: 20, right: 20, bottom: 30, left: 50};
+
+    // Create SVG
+    const svg = d3.select("#chart")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+    // X scale
+    const x = d3.scaleLinear()
+        .domain([1, cleaned.length])
+        .range([margin.left, width - margin.right]);
+
+    // Y scale
+    const y = d3.scaleLinear()
+        .domain([0, d3.max(cleaned, d => d.value)])
+        .nice()
+        .range([height - margin.bottom, margin.top]);
+
+    // Line generator
+    const line = d3.line()
+        .x(d => x(d.game))
+        .y(d => y(d.value));
+
+    // Draw line
+    svg.append("path")
+        .datum(cleaned)
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        .attr("stroke-width", 2)
+        .attr("d", line);
+
+    // Add axes
+    svg.append("g")
+        .attr("transform", `translate(0,${height - margin.bottom})`)
+        .call(d3.axisBottom(x));
+
+    svg.append("g")
+        .attr("transform", `translate(${margin.left},0)`)
+        .call(d3.axisLeft(y));
+
+    // Add chart title
+    svg.append("text")
+        .attr("x", width / 2)
+        .attr("y", margin.top - 5)
+        .attr("text-anchor", "middle")
+        .style("font-size", "16px")
+        .text(`${stat} per Game`);
+}
+</script>
+</body>
+</html>
