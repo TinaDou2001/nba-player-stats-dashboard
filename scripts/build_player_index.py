@@ -2,7 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 
-
 def get_all_player_suffixes():
     all_players = []
 
@@ -10,8 +9,7 @@ def get_all_player_suffixes():
         index_url = f"https://www.basketball-reference.com/players/{last_name_letter}/"
         headers = {"User-Agent": "Mozilla/5.0"}
         res = requests.get(index_url, headers=headers)
-        html = res.content.decode("utf-8", errors="replace")
-        soup = BeautifulSoup(html, "html.parser")
+        soup = BeautifulSoup(res.text, "html.parser")
 
         for row in soup.select("table tbody tr"):
             th = row.find("th", {"data-stat": "player"})
