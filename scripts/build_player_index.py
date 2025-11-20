@@ -1,14 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
-import unicodedata
 
-
-def clean_name(name):
-    name = unicodedata.normalize("NFKD", name)
-    name = ''.join(c for c in name if not unicodedata.combining(c))
-    name = name.replace("\u00a0", " ").replace("\ufeff", "").strip()
-    return name
 
 def get_all_player_suffixes():
     all_players = []
