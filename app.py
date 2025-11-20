@@ -20,9 +20,9 @@ def find_player_suffix(name):
         return row.iloc[0]["suffix"]
 
     # Fuzzy match
-    # row = player_df[player_df["player_name"].str.lower().str.contains(name.lower())]
-    # if len(row) > 0:
-    #    return row.iloc[0]["suffix"]
+    row = player_df[player_df["player_name"].str.lower().str.contains(name.lower())]
+    if len(row) > 0:
+        return row.iloc[0]["suffix"]
 
     return None
 
