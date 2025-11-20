@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify, render_template
 import pandas as pd
 from bs4 import BeautifulSoup
 from datetime import date
+import requests
+
 
 app = Flask(__name__)
 @app.route("/")
@@ -28,8 +30,16 @@ def find_player_suffix(name):
 
 def get_game_log_table(suffix, season):
     url = f"https://www.basketball-reference.com/players/{suffix[0]}/{suffix}/gamelog/{season}/"
+    
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
+    }
+
     try:
-        tables = pd.read_html(url)
+        html = requests.get(url, headers=headers).text
+
+        tables = pd.read_html(html)
+        
         for table in tables:
             if "PTS" in table.columns and "TRB" in table.columns and "AST" in table.columns:
                 return table
