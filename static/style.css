@@ -1,12 +1,28 @@
 body {
     font-family: Arial, sans-serif;
-    background: #045add;
-    margin: 0;
-    padding: 20px;
+    background: hsl(0, 0%, 99%);
+    margin: 30px;
     text-align: center;
 }
 
-h1, h2 {
-    font-weight: 600;
-    color: #222;
+
+#controls input,
+#controls select {
+    padding: 8px 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+button {
+    padding: 8px 16px;
+    background: #2463eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #1a4fc7;
 }
