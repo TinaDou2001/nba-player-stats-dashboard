@@ -1,0 +1,12 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #045add;
+    margin: 0;
+    padding: 20px;
+    text-align: center;
+}
+
+h1, h2 {
+    font-weight: 600;
+    color: #222;
+}

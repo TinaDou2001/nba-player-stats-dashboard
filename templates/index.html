@@ -3,6 +3,7 @@
 <head>
     <title>NBA Stats Viewer</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
@@ -30,22 +31,18 @@
 
 <script>
 
-// ===========================
-// MAIN LOOKUP FUNCTION
-// ===========================
 async function lookup() {
     let name = document.querySelector("#name").value.trim();
     let season = document.querySelector("#season").value.trim();
     let stat = document.querySelector("#stat").value;
 
     if (!name || !season || !stat) {
-        alert("Please enter player name, season, and stat type.");
+        alert("Please enter a valid player name, season, and stat type.");
         return;
     }
 
     let url = `/player?name=${encodeURIComponent(name)}&season=${season}`;
 
-    // Clear old charts
     d3.select("#histogram").html("Loading...");
     d3.select("#moving-average").html("");
     d3.select("#scatter").html("");
@@ -58,11 +55,6 @@ async function lookup() {
     renderScatter(data, stat);
 }
 
-
-
-// ===========================
-// HISTOGRAM
-// ===========================
 function renderHistogram(data, stat) {
 
     d3.select("#histogram").html("");
@@ -123,10 +115,6 @@ function renderHistogram(data, stat) {
 }
 
 
-
-// ===========================
-// MOVING AVERAGE
-// ===========================
 function renderMovingAverage(data, stat) {
 
     d3.select("#moving-average").html("");
@@ -189,11 +177,6 @@ function renderMovingAverage(data, stat) {
         .text("5-Game Moving Average");
 }
 
-
-
-// ===========================
-// SCATTER PLOT
-// ===========================
 function renderScatter(data, stat) {
 
     d3.select("#scatter").html("");
