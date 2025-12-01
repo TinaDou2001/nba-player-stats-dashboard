@@ -48,7 +48,9 @@ body {
     margin-top: 0;
 }
 
+/* CONTROLS */
 .controls {
+    max-width: 900px;
     margin: 30px auto;
     text-align: center;
 }
@@ -81,4 +83,18 @@ button:hover {
     margin: 20px auto;
     padding: 20px;
     line-height: 1.6;
+}
+
+/* CHARTS */
+#chart-title {
+    max-width: 900px;
+    margin: 20px auto;
+    text-align: center;
+}
+
+#histogram,
+#moving-average,
+#scatter {
+    max-width: 900px;
+    margin: 0 auto 40px auto;
 }
