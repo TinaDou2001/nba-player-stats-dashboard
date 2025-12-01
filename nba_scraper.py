@@ -1,7 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
-import statistics
 from datetime import date
 
 # Step 1: Get player's Basketball Reference suffix

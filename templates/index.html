@@ -1,35 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NBA Stats Viewer</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
+    <div class="container">
+        <header>
+            <div class="header-left">
+                <h1>NBA Stats Viewer</h1>
+                <p class="subtitle">Data-powered moneyline predictions from historical performance.</p>
+            </div>
+    <input id="name" placeholder="Please type in player name">
+    <input id="season" placeholder="Season (e.g., 2024)">
+    <select id="stat">
+        <option value="">-- Select Stat --</option>
+        <option value="PTS">Points</option>
+        <option value="AST">Assists</option>
+        <option value="TRB">Rebounds</option>
+        <option value="STL">Steals</option>
+        <option value="BLK">Blocks</option>
+        <option value="FG">Field Goals</option>
+        <option value="MP">Minutes Played</option>
+    </select>
 
-<input id="name" placeholder="Player name">
-<input id="season" placeholder="Season">
-<select id="stat">
-    <option value="">-- Select Stat --</option>
-    <option value="PTS">Points</option>
-    <option value="AST">Assists</option>
-    <option value="TRB">Rebounds</option>
-    <option value="STL">Steals</option>
-    <option value="BLK">Blocks</option>
-    <option value="FG">Field Goals</option>
-    <option value="MP">Minutes Played</option>
-</select>
+    <button onclick="lookup()">Search</button>
 
-<button onclick="lookup()">Search</button>
-
-<h2 id="chart-title"></h2>
-<div id="histogram"></div>
-<div id="moving-average"></div>
-<div id="scatter"></div>
+    <h2 id="chart-title"></h2>
+    <div id="histogram"></div>
+    <div id="moving-average"></div>
+    <div id="scatter"></div>
 
 
-<script>
+    <script>
 
 async function lookup() {
     let name = document.querySelector("#name").value.trim();
