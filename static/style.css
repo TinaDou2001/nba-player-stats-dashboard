@@ -1,24 +1,84 @@
-header {
-    display: block;
-    margin-bottom: 20px;
-}
-
-.header-left {
-    margin-bottom: 15px;
-}
-
-h1 {
-    font-size: 32px;
+body {
+    font-family: "Inter", Arial, sans-serif;
+    background: #fafafa;
     margin: 0;
     padding: 0;
+    color: #333;
+}
+
+/* HERO SECTION */
+.hero {
+    background: white;
+    padding: 40px 20px 20px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+}
+
+.hero h1 {
+    font-size: 36px;
+    margin-bottom: 5px;
 }
 
 .subtitle {
-    font-size: 14px;
-    color: #555;
-    margin-top: 5px;
+    color: #666;
+    font-size: 16px;
 }
 
-.container {
+/* INTRO */
+.intro {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 0 20px;
+    color: #444;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+/* INSTRUCTIONS */
+.instructions-box {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #f2f4f7;
+    border-left: 4px solid #2463eb;
+    border-radius: 6px;
+}
+
+.instructions-box h2 {
+    margin-top: 0;
+}
+
+.controls {
+    margin: 30px auto;
     text-align: center;
+}
+
+.controls input,
+.controls select {
+    padding: 10px;
+    margin: 5px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+button {
+    padding: 10px 16px;
+    background: #2463eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #1649b9;
+}
+
+/* EXPLANATION SECTION */
+.explanation {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 20px;
+    line-height: 1.6;
 }
