@@ -10,15 +10,13 @@
 
 <body>
 
-<!-- HERO HEADER -->
-<div class="hero">
+<div class="player">
     <h1>NBA Moneyline Insight Explorer</h1>
     <p class="subtitle">
         Convert NBA player game logs into data-powered predictions using medians, trends, and statistical distributions.
     </p>
 </div>
 
-<!-- INTRO -->
 <div class="intro">
     <p>
         This interactive tool lets you analyze an NBA player's historical performance and generate
@@ -27,7 +25,6 @@
     </p>
 </div>
 
-<!-- INSTRUCTIONS -->
 <div class="instructions-box">
     <h2>How to Use This Tool</h2>
     <ol>
@@ -38,7 +35,6 @@
     </ol>
 </div>
 
-<!-- CONTROLS -->
 <div class="controls">
     <input id="name" placeholder="Player name">
     <input id="season" placeholder="Season (e.g., 2024)">
@@ -55,7 +51,6 @@
     <button onclick="lookup()">Search</button>
 </div>
 
-<!-- EXPLANATION -->
 <div class="explanation">
     <h2>How to Interpret the Charts</h2>
 
@@ -65,21 +60,19 @@
     <p><strong>Median Line:</strong> Represents the player's “true” central performance level — the basis for a fair moneyline estimate.</p>
 </div>
 
-<!-- CHART TITLES + CHARTS -->
 <h2 id="chart-title"></h2>
 <div id="histogram"></div>
 <div id="moving-average"></div>
 <div id="scatter"></div>
 
 
-
-<!-- JAVASCRIPT -->
 <script>
 
 async function lookup() {
     let name = document.querySelector("#name").value.trim();
     let season = document.querySelector("#season").value.trim();
     let stat = document.querySelector("#stat").value;
+
 
     if (!name || !season || !stat) {
         alert("Please enter a valid player name, season, and stat type.");
@@ -94,6 +87,15 @@ async function lookup() {
 
     let res = await fetch(url);
     let data = await res.json();
+
+    if (!data || data.length === 0) {
+    alert("Player not found. Please enter a full and valid NBA player name (e.g., 'Stephen Curry').");
+    d3.select("#histogram").html("");
+    d3.select("#moving-average").html("");
+    d3.select("#scatter").html("");
+    document.querySelector("#chart-title").textContent = "";
+    return;
+    }
 
     renderHistogram(data, stat);
     renderMovingAverage(data, stat);

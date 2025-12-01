@@ -7,14 +7,14 @@ body {
 }
 
 /* HERO SECTION */
-.hero {
+.player {
     background: white;
     padding: 40px 20px 20px;
     border-bottom: 1px solid #ddd;
     text-align: center;
 }
 
-.hero h1 {
+.player h1 {
     font-size: 36px;
     margin-bottom: 5px;
 }
