@@ -38,7 +38,8 @@
 <div class="controls">
     <input id="name" placeholder="Player name">
     <div id="name-error" style="color:#ee0000; display:none;"></div>
-    <input id="season" placeholder="Season (e.g., 2024)">
+    <select id="season"></select>
+    <div id="season-error" style="color:#ee0000; display:none;"></div>
     <select id="stat">
         <option value="">-- Select Stat --</option>
         <option value="PTS">Points</option>
@@ -70,9 +71,22 @@
 <script>
 let valid_player_names = [];
 
-d3.csv("/data/player_index.csv").then(data => {
+d3.csv("/static/player_index.csv").then(data => {
     valid_player_names = data.map(d => d.player_name.trim());
 });
+
+function populateSeasons() {
+    const seasonSelect = document.querySelector("#season");
+    const currentYear = new Date().getFullYear();
+
+    for (let year = 2004; year <= currentYear; year++) {
+        let opt = document.createElement("option");
+        opt.value = year;
+        opt.textContent = year;
+        seasonSelect.appendChild(opt);
+    }
+}
+populateSeasons();
 
 async function lookup() {
     let name = document.querySelector("#name").value.trim();
