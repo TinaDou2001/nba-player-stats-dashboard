@@ -77,12 +77,16 @@ button:hover {
     background: #1649b9;
 }
 
-/* EXPLANATION SECTION */
-.explanation {
+/* EXPLANATION */
+.chart-section {
     max-width: 900px;
-    margin: 20px auto;
-    padding: 20px;
-    line-height: 1.6;
+    margin: 40px auto;
+}
+
+.chart-desc {
+    color: #444;
+    margin-bottom: 10px;
+    font-size: 15px;
 }
 
 /* CHARTS */

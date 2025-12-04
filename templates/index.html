@@ -53,20 +53,35 @@
     <button onclick="lookup()">Search</button>
 </div>
 
-<div class="explanation">
-    <h2>How to Interpret the Charts</h2>
+<!-- Histogram -->
+<section class="chart-section">
+    <h3>Histogram</h3>
+    <p class="chart-desc">
+        Shows how often the player hit different stat values this season.
+        A tight histogram = consistency, while a wide one = volatility.
+    </p>
+    <div id="histogram"></div>
+</section>
 
-    <p><strong>Histogram:</strong> Shows the distribution of all game results. A tight distribution → consistent player. A wide distribution → volatile performer.</p>
-    <p><strong>Scatter Plot:</strong> Each dot is a game. Helps you see streaks, outliers, and overall variability.</p>
-    <p><strong>Moving Average:</strong> Highlights trends across the season, smoothing out game-to-game noise.</p>
-    <p><strong>Median Line:</strong> Represents the player's “true” central performance level — the basis for a fair moneyline estimate.</p>
-</div>
+<!-- Moving Average -->
+<section class="chart-section">
+    <h3>5-Game Moving Average</h3>
+    <p class="chart-desc">
+        Reveals short-term trends by smoothing out game-to-game noise.
+        This helps identify hot streaks or slumps.
+    </p>
+    <div id="moving-average"></div>
+</section>
 
-<h2 id="chart-title"></h2>
-<div id="histogram"></div>
-<div id="moving-average"></div>
-<div id="scatter"></div>
-
+<!-- Scatter Plot -->
+<section class="chart-section">
+    <h3>Scatter Plot</h3>
+    <p class="chart-desc">
+        Each dot is a game. The red dashed line marks the median performance,
+        which anchors the moneyline estimate.
+    </p>
+    <div id="scatter"></div>
+</section>
 
 <script>
 let valid_player_names = [];
@@ -134,6 +149,13 @@ async function lookup() {
         document.querySelector("#chart-title").textContent = "";
         return;
     }
+
+    window.onload = () => {
+        document.querySelector("#name").value = "Stephen Curry";
+        document.querySelector("#season").value = new Date().getFullYear();
+        document.querySelector("#stat").value = "PTS";
+        lookup();
+    };
 
     renderHistogram(data, stat);
     renderMovingAverage(data, stat);
