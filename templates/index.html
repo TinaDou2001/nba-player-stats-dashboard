@@ -37,6 +37,7 @@
 
 <div class="controls">
     <input id="name" placeholder="Player name">
+    <div id="name-error" style="color:#ee0000; display:none;"></div>
     <input id="season" placeholder="Season (e.g., 2024)">
     <select id="stat">
         <option value="">-- Select Stat --</option>
@@ -67,15 +68,35 @@
 
 
 <script>
+let valid_player_names = [];
+
+d3.csv("/data/player_index.csv").then(data => {
+    valid_player_names = data.map(d => d.player_name.trim());
+});
 
 async function lookup() {
     let name = document.querySelector("#name").value.trim();
     let season = document.querySelector("#season").value.trim();
     let stat = document.querySelector("#stat").value;
 
+    let nameError = document.querySelector("#name-error");
+    nameError.style.display = "none";
 
-    if (!name || !season || !stat) {
-        alert("Please enter a valid player name, season, and stat type.");
+    if (!name) {
+        nameError.textContent = "Please enter a player name.";
+        nameError.style.display = "block";
+        return;
+    }
+
+    if (!valid_player_names.includes(name)) {
+        nameError.textContent =
+            "Player not found. Please make sure you typed the full name correctly.";
+        nameError.style.display = "block";
+        return;
+    }
+
+    if (!season || !stat) {
+        alert("Please enter a valid season and stat.");
         return;
     }
 
@@ -87,9 +108,12 @@ async function lookup() {
 
     let res = await fetch(url);
     let data = await res.json();
+
     if (!data || data.length === 0) {
-        alert("Player not found. Please enter a valid full NBA player name.");
-        
+        nameError.textContent =
+            "No game logs found for this player and season.";
+        nameError.style.display = "block";
+
         d3.select("#histogram").html("");
         d3.select("#moving-average").html("");
         d3.select("#scatter").html("");
