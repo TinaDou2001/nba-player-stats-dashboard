@@ -150,13 +150,6 @@ async function lookup() {
         return;
     }
 
-    window.onload = () => {
-        document.querySelector("#name").value = "Stephen Curry";
-        document.querySelector("#season").value = new Date().getFullYear();
-        document.querySelector("#stat").value = "PTS";
-        lookup();
-    };
-
     renderHistogram(data, stat);
     renderMovingAverage(data, stat);
     renderScatter(data, stat);
@@ -350,6 +343,13 @@ function renderScatter(data, stat) {
         .attr("text-anchor", "middle")
         .text(stat + " Value");
 }
+
+window.onload = () => {
+    document.querySelector("#name").value = "Stephen Curry";
+    document.querySelector("#season").value = new Date().getFullYear();
+    document.querySelector("#stat").value = "PTS";
+    lookup();
+};
 
 </script>
 
