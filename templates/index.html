@@ -163,10 +163,9 @@ async function lookup() {
 function renderHistogram(data, stat) {
     d3.select("#histogram").html("");
 
-    let cleaned = data.filter(d =>
-        d["Rk"] && !isNaN(+d["Rk"]) &&
-        d[stat] !== "" && !isNaN(+d[stat])
-    ).map(d => +d[stat]);
+    let cleaned = data
+        .map(d => +d[stat])
+        .filter(v => !isNaN(v))
 
     const width = 900, height = 350;
     const margin = { top: 20, right: 20, bottom: 50, left: 60 };
@@ -285,9 +284,9 @@ function renderMovingAverage(data, stat) {
 function renderScatter(data, stat) {
     d3.select("#scatter").html("");
 
-    let cleaned = data.filter(d =>
-        d["Rk"] && !isNaN(+d["Rk"]) && d[stat] !== "" && !isNaN(+d[stat])
-    ).map((d, i) => ({ game: i + 1, value: +d[stat] }));
+    let cleaned = data
+        .map((d, i) => ({ game: i + 1, value: +d[stat] }))
+        .filter(d => !isNaN(d.value));
 
     const width = 900, height = 300;
     const margin = { top: 20, right: 20, bottom: 50, left: 60 };
