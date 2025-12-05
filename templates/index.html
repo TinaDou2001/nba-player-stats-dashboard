@@ -88,6 +88,11 @@ let valid_player_names = [];
 
 d3.csv("/static/player_index.csv").then(data => {
     valid_player_names = data.map(d => d.player_name.trim());
+
+    document.querySelector("#name").value = "Stephen Curry";
+    document.querySelector("#season").value = new Date().getFullYear();
+    document.querySelector("#stat").value = "PTS";
+    lookup();
 });
 
 function populateSeasons() {
@@ -347,7 +352,6 @@ window.onload = () => {
     document.querySelector("#name").value = "Stephen Curry";
     document.querySelector("#season").value = new Date().getFullYear();
     document.querySelector("#stat").value = "PTS";
-    lookup();
 };
 
 </script>
