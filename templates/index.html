@@ -48,7 +48,6 @@
         <option value="STL">Steals</option>
         <option value="BLK">Blocks</option>
         <option value="FG">Field Goals</option>
-        <option value="MP">Minutes Played</option>
     </select>
     <button onclick="lookup()">Search</button>
 </div>
@@ -86,7 +85,15 @@
 <script>
 let valid_player_names = [];
 
-// --- Populate season dropdown ---
+d3.csv("/static/player_index.csv").then(data => {
+    valid_player_names = data.map(d => d.player_name.trim());
+
+    document.querySelector("#name").value = "Stephen Curry";
+    document.querySelector("#season").value = new Date().getFullYear();
+    document.querySelector("#stat").value = "PTS";
+    lookup();
+});
+
 function populateSeasons() {
     const seasonSelect = document.querySelector("#season");
     const currentYear = new Date().getFullYear();
@@ -100,36 +107,10 @@ function populateSeasons() {
 }
 populateSeasons();
 
-// --- Load player names, then do default Steph Curry lookup ---
-d3.csv("/static/player_index.csv").then(data => {
-    valid_player_names = data.map(d => d.player_name.trim());
-
-    const currentYear = new Date().getFullYear();
-    document.querySelector("#name").value = "Stephen Curry";
-    document.querySelector("#season").value = currentYear;
-    document.querySelector("#stat").value = "PTS";
-
-    lookup();
-});
-
-// --- Helper: get clean per-game data for a stat ---
-function getGames(data, stat) {
-    return data
-        // keep only real game rows with numeric Rk
-        .filter(d => d["Rk"] && !isNaN(+d["Rk"]))
-        .map((d, i) => ({
-            game: i + 1,          // game index
-            value: +d[stat]       // numeric stat
-        }))
-        // drop rows where stat couldn't be parsed
-        .filter(d => !isNaN(d.value));
-}
-
-// --- Main lookup ---
 async function lookup() {
-    let name   = document.querySelector("#name").value.trim();
+    let name = document.querySelector("#name").value.trim();
     let season = document.querySelector("#season").value.trim();
-    let stat   = document.querySelector("#stat").value;
+    let stat = document.querySelector("#stat").value;
 
     let nameError = document.querySelector("#name-error");
     nameError.style.display = "none";
@@ -158,7 +139,7 @@ async function lookup() {
     d3.select("#moving-average").html("");
     d3.select("#scatter").html("");
 
-    let res  = await fetch(url);
+    let res = await fetch(url);
     let data = await res.json();
 
     if (!data || data.length === 0) {
@@ -177,20 +158,16 @@ async function lookup() {
     renderScatter(data, stat);
 }
 
-// --- Histogram ---
+
 function renderHistogram(data, stat) {
     d3.select("#histogram").html("");
 
-    const games = getGames(data, stat);
-    const values = games.map(d => d.value);
+    let cleaned = data
+        .filter(d => d["Rk"] && !isNaN(+d["Rk"]))
+        .map(d => +d[stat])
+        .filter(v => !isNaN(v));
 
-    // if no numeric values, bail gracefully
-    if (values.length === 0) {
-        d3.select("#histogram").html("No numeric data available for this stat.");
-        return;
-    }
-
-    const width  = 900, height = 350;
+    const width = 900, height = 350;
     const margin = { top: 20, right: 20, bottom: 50, left: 60 };
 
     const svg = d3.select("#histogram")
@@ -199,13 +176,13 @@ function renderHistogram(data, stat) {
         .attr("height", height);
 
     const x = d3.scaleLinear()
-        .domain([0, d3.max(values)])
+        .domain([0, d3.max(cleaned)])
         .nice()
         .range([margin.left, width - margin.right]);
 
     const bins = d3.histogram()
         .domain(x.domain())
-        .thresholds(12)(values);
+        .thresholds(12)(cleaned);
 
     const y = d3.scaleLinear()
         .domain([0, d3.max(bins, d => d.length)])
@@ -232,6 +209,12 @@ function renderHistogram(data, stat) {
         .call(d3.axisLeft(y));
 
     svg.append("text")
+        .attr("x", width - 120)
+        .attr("y", margin.top + 10)
+        .attr("fill", "#2463eb")
+        .text("Stat Frequency");
+
+    svg.append("text")
         .attr("x", width / 2)
         .attr("y", height - 10)
         .attr("text-anchor", "middle")
@@ -245,27 +228,23 @@ function renderHistogram(data, stat) {
         .text("Number of Games");
 }
 
-// --- 5-game moving average ---
+
 function renderMovingAverage(data, stat) {
     d3.select("#moving-average").html("");
 
-    const games = getGames(data, stat);
-    const values = games.map(d => d.value);
+    let cleaned = data
+        .filter(d => d["Rk"] && !isNaN(+d["Rk"]))
+        .map(d => +d[stat])
+        .filter(v => !isNaN(v));
 
-    if (values.length === 0) {
-        d3.select("#moving-average").html("No numeric data available for this stat.");
-        return;
-    }
-
-    // simple 5-game moving average
-    const ma = values.map((_, i) => {
-        const slice = values.slice(Math.max(0, i - 4), i + 1);
+    let ma = cleaned.map((_, i) => {
+        let slice = cleaned.slice(Math.max(0, i - 4), i + 1);
         return slice.reduce((a, b) => a + b, 0) / slice.length;
     });
 
-    const series = ma.map((v, i) => ({ game: games[i].game, value: v }));
+    let series = ma.map((v, i) => ({ game: i + 1, value: v }));
 
-    const width  = 900, height = 300;
+    const width = 900, height = 300;
     const margin = { top: 20, right: 20, bottom: 50, left: 60 };
 
     const svg = d3.select("#moving-average")
@@ -273,19 +252,12 @@ function renderMovingAverage(data, stat) {
         .attr("width", width)
         .attr("height", height);
 
-    const x = d3.scaleLinear()
-        .domain(d3.extent(series, d => d.game))
-        .range([margin.left, width - margin.right]);
-
-    const y = d3.scaleLinear()
-        .domain([0, d3.max(series, d => d.value)])
-        .range([height - margin.bottom, margin.top]);
+    const x = d3.scaleLinear().domain([1, series.length]).range([margin.left, width - margin.right]);
+    const y = d3.scaleLinear().domain([0, d3.max(series, d => d.value)]).range([height - margin.bottom, margin.top]);
 
     svg.append("path")
         .datum(series)
-        .attr("d", d3.line()
-            .x(d => x(d.game))
-            .y(d => y(d.value)))
+        .attr("d", d3.line().x(d => x(d.game)).y(d => y(d.value)))
         .attr("fill", "none")
         .attr("stroke", "#ff7f0e")
         .attr("stroke-width", 2);
@@ -310,20 +282,24 @@ function renderMovingAverage(data, stat) {
         .attr("y", 20)
         .attr("text-anchor", "middle")
         .text("5-Game Moving Average");
+
+    svg.append("text")
+        .attr("x", width - 150)
+        .attr("y", margin.top + 10)
+        .attr("fill", "#ff7f0e")
+        .text("5-Game Moving Avg");
 }
 
-// --- Scatter plot ---
+
 function renderScatter(data, stat) {
     d3.select("#scatter").html("");
 
-    const games = getGames(data, stat);
+let cleaned = data
+    .filter(d => d["Rk"] && !isNaN(+d["Rk"]))
+    .map((d, i) => ({ game: i + 1, value: +d[stat] }))
+    .filter(d => !isNaN(d.value));
 
-    if (games.length === 0) {
-        d3.select("#scatter").html("No numeric data available for this stat.");
-        return;
-    }
-
-    const width  = 900, height = 300;
+    const width = 900, height = 300;
     const margin = { top: 20, right: 20, bottom: 50, left: 60 };
 
     const svg = d3.select("#scatter")
@@ -331,16 +307,11 @@ function renderScatter(data, stat) {
         .attr("width", width)
         .attr("height", height);
 
-    const x = d3.scaleLinear()
-        .domain(d3.extent(games, d => d.game))
-        .range([margin.left, width - margin.right]);
-
-    const y = d3.scaleLinear()
-        .domain([0, d3.max(games, d => d.value)])
-        .range([height - margin.bottom, margin.top]);
+    const x = d3.scaleLinear().domain([1, cleaned.length]).range([margin.left, width - margin.right]);
+    const y = d3.scaleLinear().domain([0, d3.max(cleaned, d => d.value)]).range([height - margin.bottom, margin.top]);
 
     svg.selectAll("circle")
-        .data(games)
+        .data(cleaned)
         .enter()
         .append("circle")
         .attr("cx", d => x(d.game))
@@ -348,7 +319,7 @@ function renderScatter(data, stat) {
         .attr("r", 4)
         .attr("fill", "#1f77b4");
 
-    const median = d3.median(games, d => d.value);
+    const median = d3.median(cleaned, d => d.value);
 
     svg.append("line")
         .attr("x1", margin.left)
@@ -385,17 +356,27 @@ function renderScatter(data, stat) {
         .attr("y", 20)
         .attr("text-anchor", "middle")
         .text(stat + " Value");
+    
+        svg.append("text")
+    .attr("x", width - 150)
+    .attr("y", margin.top + 10)
+    .attr("fill", "#1f77b4")
+    .text("Game Values");
+
+    svg.append("text")
+        .attr("x", width - 150)
+        .attr("y", margin.top + 30)
+        .attr("fill", "red")
+        .text("Median Line");
 }
 
-// window.onload no longer needs to call lookup; defaults are set in CSV .then
 window.onload = () => {
-    // just keep UI defaults synced; no lookup here
     document.querySelector("#name").value = "Stephen Curry";
     document.querySelector("#season").value = new Date().getFullYear();
     document.querySelector("#stat").value = "PTS";
 };
-</script>
 
+</script>
 
 </body>
 </html>
