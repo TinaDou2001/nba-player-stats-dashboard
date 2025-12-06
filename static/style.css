@@ -102,3 +102,14 @@ button:hover {
     max-width: 900px;
     margin: 0 auto 40px auto;
 }
+.tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    pointer-events: none;
+    font-size: 13px;
+    display: none;
+    z-index: 10;
+}

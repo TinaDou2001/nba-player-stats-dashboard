@@ -10,6 +10,18 @@
 
 <body>
 
+<!-- SINGLE tooltip for all charts -->
+<div id="tooltip" class="tooltip" style="
+    position:absolute;
+    background:white;
+    padding:6px 10px;
+    border:1px solid #999;
+    border-radius:4px;
+    display:none;
+    pointer-events:none;
+    font-size:13px;
+"></div>
+
 <div class="player">
     <h1>NBA Moneyline Insight Explorer</h1>
     <p class="subtitle">
@@ -20,8 +32,7 @@
 <div class="intro">
     <p>
         This interactive tool lets you analyze an NBA player's historical performance and generate
-        estimated moneyline odds based on real statistical distributions. Enter a player, select a season,
-        choose a stat, and explore volatility, trends, and expected outcomes through intuitive charts.
+        estimated moneyline odds based on real statistical distributions.
     </p>
 </div>
 
@@ -38,8 +49,9 @@
 <div class="controls">
     <input id="name" placeholder="Player name">
     <div id="name-error" style="color:#ee0000; display:none;"></div>
+
     <select id="season"></select>
-    <div id="season-error" style="color:#ee0000; display:none;"></div>
+
     <select id="stat">
         <option value="">-- Select Stat --</option>
         <option value="PTS">Points</option>
@@ -49,51 +61,53 @@
         <option value="BLK">Blocks</option>
         <option value="FG">Field Goals</option>
     </select>
+
     <button onclick="lookup()">Search</button>
 </div>
 
-<!-- Histogram -->
 <section class="chart-section">
     <h3>Histogram</h3>
-    <p class="chart-desc">
-        Shows how often the player hit different stat values this season.
-        A tight histogram = consistency, while a wide one = volatility.
-    </p>
+    <p class="chart-desc">Shows how often the player hit different stat values.</p>
     <div id="histogram"></div>
 </section>
 
-<!-- Moving Average -->
 <section class="chart-section">
     <h3>5-Game Moving Average</h3>
-    <p class="chart-desc">
-        Reveals short-term trends by smoothing out game-to-game noise.
-        This helps identify hot streaks or slumps.
-    </p>
+    <p class="chart-desc">Reveals short-term trends and streaks.</p>
     <div id="moving-average"></div>
 </section>
 
-<!-- Scatter Plot -->
 <section class="chart-section">
     <h3>Scatter Plot</h3>
-    <p class="chart-desc">
-        Each dot is a game. The red dashed line marks the median performance,
-        which anchors the moneyline estimate.
-    </p>
+    <p class="chart-desc">Each dot is a game; red dashed line = median.</p>
     <div id="scatter"></div>
 </section>
 
+
 <script>
+/* --------------------------------------------------------
+   GLOBAL TOOLTIP
+--------------------------------------------------------- */
+const tooltip = d3.select("#tooltip");
+
+
+/* --------------------------------------------------------
+   LOAD PLAYER INDEX
+--------------------------------------------------------- */
 let valid_player_names = [];
 
 d3.csv("/static/player_index.csv").then(data => {
     valid_player_names = data.map(d => d.player_name.trim());
-
     document.querySelector("#name").value = "Stephen Curry";
     document.querySelector("#season").value = new Date().getFullYear();
     document.querySelector("#stat").value = "PTS";
     lookup();
 });
 
+
+/* --------------------------------------------------------
+   POPULATE SEASON DROPDOWN
+--------------------------------------------------------- */
 function populateSeasons() {
     const seasonSelect = document.querySelector("#season");
     const currentYear = new Date().getFullYear();
@@ -107,6 +121,10 @@ function populateSeasons() {
 }
 populateSeasons();
 
+
+/* --------------------------------------------------------
+   MAIN LOOKUP
+--------------------------------------------------------- */
 async function lookup() {
     let name = document.querySelector("#name").value.trim();
     let season = document.querySelector("#season").value.trim();
@@ -115,15 +133,8 @@ async function lookup() {
     let nameError = document.querySelector("#name-error");
     nameError.style.display = "none";
 
-    if (!name) {
-        nameError.textContent = "Please enter a player name.";
-        nameError.style.display = "block";
-        return;
-    }
-
     if (!valid_player_names.includes(name)) {
-        nameError.textContent =
-            "Player not found. Please make sure you typed the full name correctly.";
+        nameError.textContent = "Player not found. Check spelling.";
         nameError.style.display = "block";
         return;
     }
@@ -133,23 +144,16 @@ async function lookup() {
         return;
     }
 
-    let url = `/player?name=${encodeURIComponent(name)}&season=${season}`;
-
     d3.select("#histogram").html("Loading...");
     d3.select("#moving-average").html("");
     d3.select("#scatter").html("");
 
-    let res = await fetch(url);
+    let res = await fetch(`/player?name=${encodeURIComponent(name)}&season=${season}`);
     let data = await res.json();
 
     if (!data || data.length === 0) {
-        nameError.textContent =
-            "No game logs found for this player and season.";
+        nameError.textContent = "No game logs for this player/season.";
         nameError.style.display = "block";
-
-        d3.select("#histogram").html("");
-        d3.select("#moving-average").html("");
-        d3.select("#scatter").html("");
         return;
     }
 
@@ -159,19 +163,21 @@ async function lookup() {
 }
 
 
+/* --------------------------------------------------------
+   HISTOGRAM (WITH FIXED HOVERS)
+--------------------------------------------------------- */
 function renderHistogram(data, stat) {
     d3.select("#histogram").html("");
 
     let cleaned = data
-        .filter(d => d["Rk"] && !isNaN(+d["Rk"]))
+        .filter(d => !isNaN(+d["Rk"]))
         .map(d => +d[stat])
         .filter(v => !isNaN(v));
 
     const width = 900, height = 350;
     const margin = { top: 20, right: 20, bottom: 50, left: 60 };
 
-    const svg = d3.select("#histogram")
-        .append("svg")
+    const svg = d3.select("#histogram").append("svg")
         .attr("width", width)
         .attr("height", height);
 
@@ -189,7 +195,9 @@ function renderHistogram(data, stat) {
         .nice()
         .range([height - margin.bottom, margin.top]);
 
-    svg.selectAll("rect")
+
+    /* ✔ Attach hovers AFTER creating rectangles */
+    const bars = svg.selectAll("rect")
         .data(bins)
         .enter()
         .append("rect")
@@ -200,46 +208,39 @@ function renderHistogram(data, stat) {
         .attr("fill", "#2463eb")
         .attr("opacity", 0.8);
 
+    bars.on("mouseover", (event, d) => {
+            tooltip.style("display", "block")
+                .html(`${d.length} games<br>Range: ${d.x0}–${d.x1}`);
+        })
+        .on("mousemove", event => {
+            tooltip.style("left", event.pageX + 10 + "px")
+                   .style("top", event.pageY - 20 + "px");
+        })
+        .on("mouseout", () => tooltip.style("display", "none"));
+
+
     svg.append("g")
         .attr("transform", `translate(0,${height - margin.bottom})`)
         .call(d3.axisBottom(x));
-
     svg.append("g")
         .attr("transform", `translate(${margin.left},0)`)
         .call(d3.axisLeft(y));
-
-    svg.append("text")
-        .attr("x", width - 120)
-        .attr("y", margin.top + 10)
-        .attr("fill", "#2463eb")
-        .text("Stat Frequency");
-
-    svg.append("text")
-        .attr("x", width / 2)
-        .attr("y", height - 10)
-        .attr("text-anchor", "middle")
-        .text(stat + " Value");
-
-    svg.append("text")
-        .attr("transform", "rotate(-90)")
-        .attr("x", -height / 2)
-        .attr("y", 20)
-        .attr("text-anchor", "middle")
-        .text("Number of Games");
 }
 
 
+/* --------------------------------------------------------
+   MOVING AVERAGE (HOVER FIXED)
+--------------------------------------------------------- */
 function renderMovingAverage(data, stat) {
     d3.select("#moving-average").html("");
 
     let cleaned = data
-        .filter(d => d["Rk"] && !isNaN(+d["Rk"]))
-        .map(d => +d[stat])
-        .filter(v => !isNaN(v));
+        .filter(d => !isNaN(+d["Rk"]))
+        .map(d => +d[stat]);
 
     let ma = cleaned.map((_, i) => {
-        let slice = cleaned.slice(Math.max(0, i - 4), i + 1);
-        return slice.reduce((a, b) => a + b, 0) / slice.length;
+        let s = cleaned.slice(Math.max(0, i - 4), i + 1);
+        return s.reduce((a, b) => a + b, 0) / s.length;
     });
 
     let series = ma.map((v, i) => ({ game: i + 1, value: v }));
@@ -247,77 +248,101 @@ function renderMovingAverage(data, stat) {
     const width = 900, height = 300;
     const margin = { top: 20, right: 20, bottom: 50, left: 60 };
 
-    const svg = d3.select("#moving-average")
-        .append("svg")
+    const svg = d3.select("#moving-average").append("svg")
         .attr("width", width)
         .attr("height", height);
 
-    const x = d3.scaleLinear().domain([1, series.length]).range([margin.left, width - margin.right]);
-    const y = d3.scaleLinear().domain([0, d3.max(series, d => d.value)]).range([height - margin.bottom, margin.top]);
+    const x = d3.scaleLinear()
+        .domain([1, series.length])
+        .range([margin.left, width - margin.right]);
+
+    const y = d3.scaleLinear()
+        .domain([0, d3.max(series, d => d.value)])
+        .range([height - margin.bottom, margin.top]);
 
     svg.append("path")
         .datum(series)
-        .attr("d", d3.line().x(d => x(d.game)).y(d => y(d.value)))
         .attr("fill", "none")
         .attr("stroke", "#ff7f0e")
-        .attr("stroke-width", 2);
+        .attr("stroke-width", 2)
+        .attr("d", d3.line()
+            .x(d => x(d.game))
+            .y(d => y(d.value)));
+
+    /* Attach hover AFTER circles exist */
+    const dots = svg.selectAll(".ma-dot")
+        .data(series)
+        .enter()
+        .append("circle")
+        .attr("class", "ma-dot")
+        .attr("cx", d => x(d.game))
+        .attr("cy", d => y(d.value))
+        .attr("r", 4)
+        .attr("fill", "#ff7f0e");
+
+    dots.on("mouseover", (event, d) => {
+            tooltip.style("display", "block")
+                .html(`Game ${d.game}<br>MA: ${d.value.toFixed(1)}`);
+        })
+        .on("mousemove", event => {
+            tooltip.style("left", event.pageX + 10 + "px")
+                   .style("top", event.pageY - 20 + "px");
+        })
+        .on("mouseout", () => tooltip.style("display", "none"));
 
     svg.append("g")
         .attr("transform", `translate(0,${height - margin.bottom})`)
         .call(d3.axisBottom(x));
-
     svg.append("g")
         .attr("transform", `translate(${margin.left},0)`)
         .call(d3.axisLeft(y));
-
-    svg.append("text")
-        .attr("x", width / 2)
-        .attr("y", height - 10)
-        .attr("text-anchor", "middle")
-        .text("Game Number");
-
-    svg.append("text")
-        .attr("transform", "rotate(-90)")
-        .attr("x", -height / 2)
-        .attr("y", 20)
-        .attr("text-anchor", "middle")
-        .text("5-Game Moving Average");
-
-    svg.append("text")
-        .attr("x", width - 150)
-        .attr("y", margin.top + 10)
-        .attr("fill", "#ff7f0e")
-        .text("5-Game Moving Avg");
 }
 
 
+/* --------------------------------------------------------
+   SCATTER PLOT (HOVER FIXED)
+--------------------------------------------------------- */
 function renderScatter(data, stat) {
     d3.select("#scatter").html("");
 
-let cleaned = data
-    .filter(d => d["Rk"] && !isNaN(+d["Rk"]))
-    .map((d, i) => ({ game: i + 1, value: +d[stat] }))
-    .filter(d => !isNaN(d.value));
+    let cleaned = data
+        .filter(d => !isNaN(+d["Rk"]))
+        .map((d, i) => ({ game: i + 1, value: +d[stat] }));
 
     const width = 900, height = 300;
     const margin = { top: 20, right: 20, bottom: 50, left: 60 };
 
-    const svg = d3.select("#scatter")
-        .append("svg")
+    const svg = d3.select("#scatter").append("svg")
         .attr("width", width)
         .attr("height", height);
 
-    const x = d3.scaleLinear().domain([1, cleaned.length]).range([margin.left, width - margin.right]);
-    const y = d3.scaleLinear().domain([0, d3.max(cleaned, d => d.value)]).range([height - margin.bottom, margin.top]);
+    const x = d3.scaleLinear()
+        .domain([1, cleaned.length])
+        .range([margin.left, width - margin.right]);
 
-    svg.selectAll("circle")
+    const y = d3.scaleLinear()
+        .domain([0, d3.max(cleaned, d => d.value)])
+        .range([height - margin.bottom, margin.top]);
+
+    const dots = svg.selectAll(".pt")
         .data(cleaned)
         .enter()
         .append("circle")
+        .attr("class", "pt")
         .attr("cx", d => x(d.game))
         .attr("cy", d => y(d.value))
         .attr("r", 4)
         .attr("fill", "#1f77b4");
+
+    dots.on("mouseover", (event, d) => {
+            tooltip.style("display", "block")
+                .html(`Game ${d.game}<br>${stat}: ${d.value}`);
+        })
+        .on("mousemove", event => {
+            tooltip.style("left", event.pageX + 10 + "px")
+                   .style("top", event.pageY - 20 + "px");
+        })
+        .on("mouseout", () => tooltip.style("display", "none"));
 
     const median = d3.median(cleaned, d => d.value);
 
@@ -329,13 +354,6 @@ let cleaned = data
         .attr("stroke", "red")
         .attr("stroke-dasharray", "4");
 
-    svg.append("text")
-        .attr("x", width - margin.right)
-        .attr("y", y(median) - 5)
-        .attr("text-anchor", "end")
-        .style("fill", "red")
-        .text("Median");
-
     svg.append("g")
         .attr("transform", `translate(0,${height - margin.bottom})`)
         .call(d3.axisBottom(x));
@@ -343,38 +361,7 @@ let cleaned = data
     svg.append("g")
         .attr("transform", `translate(${margin.left},0)`)
         .call(d3.axisLeft(y));
-
-    svg.append("text")
-        .attr("x", width / 2)
-        .attr("y", height - 10)
-        .attr("text-anchor", "middle")
-        .text("Game Number");
-
-    svg.append("text")
-        .attr("transform", "rotate(-90)")
-        .attr("x", -height / 2)
-        .attr("y", 20)
-        .attr("text-anchor", "middle")
-        .text(stat + " Value");
-    
-        svg.append("text")
-    .attr("x", width - 150)
-    .attr("y", margin.top + 10)
-    .attr("fill", "#1f77b4")
-    .text("Game Values");
-
-    svg.append("text")
-        .attr("x", width - 150)
-        .attr("y", margin.top + 30)
-        .attr("fill", "red")
-        .text("Median Line");
 }
-
-window.onload = () => {
-    document.querySelector("#name").value = "Stephen Curry";
-    document.querySelector("#season").value = new Date().getFullYear();
-    document.querySelector("#stat").value = "PTS";
-};
 
 </script>
 
